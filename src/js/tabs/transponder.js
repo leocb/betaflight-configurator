@@ -37,73 +37,73 @@ TABS.transponder.initialize = function(callback, scrollPosition) {
                 'ID 9': 'E083BFF00F9E38C0FF',
             }
         }, //arcitimer
-		3: {
-			dataType: dataTypes.LIST, // <select>...</select>
+        3: {
+            dataType: dataTypes.LIST, // <select>...</select>
             dataOptions: {
-				'0':'00',
-				'1':'01',
-				'2':'02',
-				'3':'03',
-				'4':'04',
-				'5':'05',
-				'6':'06',
-				'7':'07',
-				'8':'08',
-				'9':'09',
-				'10':'0A',
-				'11':'0B',
-				'12':'0C',
-				'13':'0D',
-				'14':'0E',
-				'15':'0F',
-				'16':'10',
-				'17':'11',
-				'18':'12',
-				'19':'13',
-				'20':'14',
-				'21':'15',
-				'22':'16',
-				'23':'17',
-				'24':'18',
-				'25':'19',
-				'26':'1A',
-				'27':'1B',
-				'28':'1C',
-				'29':'1D',
-				'30':'1E',
-				'31':'1F',
-				'32':'20',
-				'33':'21',
-				'34':'22',
-				'35':'23',
-				'36':'24',
-				'37':'25',
-				'38':'26',
-				'39':'27',
-				'40':'28',
-				'41':'29',
-				'42':'2A',
-				'43':'2B',
-				'44':'2C',
-				'45':'2D',
-				'46':'2E',
-				'47':'2F',
-				'48':'30',
-				'49':'31',
-				'50':'32',
-				'51':'33',
-				'52':'34',
-				'53':'35',
-				'54':'36',
-				'55':'37',
-				'56':'38',
-				'57':'39',
-				'58':'3A',
-				'59':'3B',
-				'60':'3C',
-				'61':'3D',
-				'62':'3E',
-				'63':'3F',
+                '0':'00',
+                '1':'01',
+                '2':'02',
+                '3':'03',
+                '4':'04',
+                '5':'05',
+                '6':'06',
+                '7':'07',
+                '8':'08',
+                '9':'09',
+                '10':'0A',
+                '11':'0B',
+                '12':'0C',
+                '13':'0D',
+                '14':'0E',
+                '15':'0F',
+                '16':'10',
+                '17':'11',
+                '18':'12',
+                '19':'13',
+                '20':'14',
+                '21':'15',
+                '22':'16',
+                '23':'17',
+                '24':'18',
+                '25':'19',
+                '26':'1A',
+                '27':'1B',
+                '28':'1C',
+                '29':'1D',
+                '30':'1E',
+                '31':'1F',
+                '32':'20',
+                '33':'21',
+                '34':'22',
+                '35':'23',
+                '36':'24',
+                '37':'25',
+                '38':'26',
+                '39':'27',
+                '40':'28',
+                '41':'29',
+                '42':'2A',
+                '43':'2B',
+                '44':'2C',
+                '45':'2D',
+                '46':'2E',
+                '47':'2F',
+                '48':'30',
+                '49':'31',
+                '50':'32',
+                '51':'33',
+                '52':'34',
+                '53':'35',
+                '54':'36',
+                '55':'37',
+                '56':'38',
+                '57':'39',
+                '58':'3A',
+                '59':'3B',
+                '60':'3C',
+                '61':'3D',
+                '62':'3E',
+                '63':'3F',
             }
         }, //ERLT
     };
@@ -115,8 +115,8 @@ TABS.transponder.initialize = function(callback, scrollPosition) {
         //googleAnalytics.sendAppView('Transponder');
     }
     // transponder supported added in MSP API Version 1.16.0
-    if ( CONFIG ) {
-        TABS.transponder.available = semver.gte(CONFIG.apiVersion, "1.16.0");
+    if ( FC.CONFIG ) {
+        TABS.transponder.available = semver.gte(FC.CONFIG.apiVersion, "1.16.0");
     }
     //////////////
     if ( !TABS.transponder.available ) {
@@ -243,9 +243,9 @@ TABS.transponder.initialize = function(callback, scrollPosition) {
             let hexRegExp = new RegExp('[0-9a-fA-F]{' + (transponderProvider.dataLength * 2) + '}', 'gi');
 
             if ( !dataString.match(hexRegExp) ) {
-                TRANSPONDER.data = [];
+                FC.TRANSPONDER.data = [];
             } else {
-                TRANSPONDER.data = hexToBytes(dataString);
+                FC.TRANSPONDER.data = hexToBytes(dataString);
             }
             _persistentInputValues[transponderProvider.id] = dataString;
         };
@@ -260,7 +260,7 @@ TABS.transponder.initialize = function(callback, scrollPosition) {
      */
     function toggleTransponderType() {
 
-        TRANSPONDER.provider = $(this).val();
+        FC.TRANSPONDER.provider = $(this).val();
         let defaultProvider = $(this).attr('data-defaultValue');
         if ( defaultProvider == $(this).val() ) {
             $('.save_reboot').hide();
@@ -271,25 +271,25 @@ TABS.transponder.initialize = function(callback, scrollPosition) {
         }
 
         let clearValue = true;
-        buildDataBlockForTransponderProviders(TRANSPONDER.providers.find(function(provider) {
-            return provider.id == TRANSPONDER.provider;
-        }), bytesToHex(TRANSPONDER.data), clearValue);
+        buildDataBlockForTransponderProviders(FC.TRANSPONDER.providers.find(function(provider) {
+            return provider.id == FC.TRANSPONDER.provider;
+        }), bytesToHex(FC.TRANSPONDER.data), clearValue);
     }
 
 
     MSP.send_message(MSPCodes.MSP_TRANSPONDER_CONFIG, false, false, load_html);
 
     function process_html() {
-        $(".tab-transponder").toggleClass("transponder-supported", TABS.transponder.available && TRANSPONDER.supported);
+        $(".tab-transponder").toggleClass("transponder-supported", TABS.transponder.available && FC.TRANSPONDER.supported);
 
         i18n.localizePage();
 
-        if ( TABS.transponder.available && TRANSPONDER.providers.length > 0 ) {
+        if ( TABS.transponder.available && FC.TRANSPONDER.providers.length > 0 ) {
 
-            fillByTransponderProviders(TRANSPONDER.providers, TRANSPONDER.provider, toggleTransponderType);
-            buildDataBlockForTransponderProviders(TRANSPONDER.providers.find(function(provider) {
-                return provider.id == TRANSPONDER.provider;
-            }), bytesToHex(TRANSPONDER.data));
+            fillByTransponderProviders(FC.TRANSPONDER.providers, FC.TRANSPONDER.provider, toggleTransponderType);
+            buildDataBlockForTransponderProviders(FC.TRANSPONDER.providers.find(function(provider) {
+                return provider.id == FC.TRANSPONDER.provider;
+            }), bytesToHex(FC.TRANSPONDER.data));
 
 
             $('a.save').click(function() {
@@ -311,8 +311,8 @@ TABS.transponder.initialize = function(callback, scrollPosition) {
                     });
                 }
 
-                if (TRANSPONDER.provider !== "0" && TRANSPONDER.data.length !== TRANSPONDER.providers.find(function(provider) {
-                        return provider.id == TRANSPONDER.provider;
+                if (FC.TRANSPONDER.provider !== "0" && FC.TRANSPONDER.data.length !== FC.TRANSPONDER.providers.find(function(provider) {
+                        return provider.id == FC.TRANSPONDER.provider;
                     }).dataLength ) {
                     GUI.log(i18n.getMessage('transponderDataInvalid'));
                 } else {

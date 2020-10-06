@@ -1,7 +1,7 @@
 'use strict';
 
 var serial = {
-	connected:       false,
+    connected:       false,
     connectionId:    false,
     openRequested:   false,
     openCanceled:    false,
@@ -39,7 +39,7 @@ var serial = {
             }
 
             if (connectionInfo && !self.openCanceled) {
-	            self.connected = true;
+                self.connected = true;
                 self.connectionId = connectionInfo.connectionId;
                 self.bitrate = connectionInfo.bitrate;
                 self.bytesReceived = 0;
@@ -52,8 +52,6 @@ var serial = {
                 });
 
                 self.onReceiveError.addListener(function watch_for_on_receive_errors(info) {
-                    console.error(info);
-
                     switch (info.error) {
                         case 'system_error': // we might be able to recover from this one
                             if (!self.failed++) {
@@ -84,8 +82,6 @@ var serial = {
                             }
                             break;
 
-                        //case 'break':
-                            // This occurs on F1 boards with old firmware during reboot
                         case 'overrun':
                             // wait 50 ms and attempt recovery
                             self.error = info.error;
@@ -112,25 +108,28 @@ var serial = {
                                 });
                             }, 50);
                             break;
-                            
+
                         case 'timeout':
-                            // TODO
+                            // No data has been received for receiveTimeout milliseconds.
+                            // We will do nothing.
                             break;
-                            
+
+                        case 'frame_error':
+                        case 'parity_error':
+                            GUI.log(i18n.getMessage('serialError' + inflection.camelize(info.error)));
                         case 'break': // This seems to be the error that is thrown under NW.js in Windows when the device reboots after typing 'exit' in CLI
+                        case 'disconnected':
                         case 'device_lost':
-                            CONFIG.armingDisabled = false;
-                            CONFIG.runawayTakeoffPreventionDisabled = false;
+                        default:
+                            console.log("serial disconnecting: " + info.error);
+                            FC.CONFIG.armingDisabled = false;
+                            FC.CONFIG.runawayTakeoffPreventionDisabled = false;
 
                             if (GUI.connected_to || GUI.connecting_to) {
                                 $('a.connect').click();
                             } else {
                                 self.disconnect();
                             }
-                            break;
-                            
-                        case 'disconnected':
-                            // TODO
                             break;
                     }
                 });
@@ -281,9 +280,12 @@ var serial = {
     },
     getDevices: function (callback) {
         chrome.serial.getDevices(function (devices_array) {
-            var devices = [];
+            const devices = [];
             devices_array.forEach(function (device) {
-                devices.push(device.path);
+                devices.push({
+                              path: device.path,
+                              displayName: device.displayName,
+                             });
             });
 
             callback(devices);
@@ -307,7 +309,7 @@ var serial = {
             // store inside separate variables in case array gets destroyed
             var data = self.outputBuffer[0].data,
                 callback = self.outputBuffer[0].callback;
-            
+
             if (!self.connected) {
                 console.log('attempting to send when disconnected');
                 if (callback) callback({
@@ -327,7 +329,7 @@ var serial = {
                    });
                    return;
                 }
-                
+
                 // tcp send error
                 if (self.connectionType == 'tcp' && sendInfo.resultCode < 0) {
                     var error = 'system_error';

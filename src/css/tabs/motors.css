@@ -1,7 +1,7 @@
 .tab-motors .modelAndGraph {
     float: left;
     width: 100%;
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 .tab-motors .spacer {
@@ -18,6 +18,27 @@
     float: left;
 }
 
+.tab-motors #dialogMotorOutputReorder-closebtn {
+    margin-right: 0px;
+    margin-bottom: 0px;
+}
+
+.tab-motors #dialogMotorOutputReorder {
+    width: 400px;
+    height:440px
+;}
+
+.tab-motors #dialogMotorOutputReorderContentWrapper {
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+    height: 100%;
+}
+
+.tab-motors #dialogMotorOutputReorderContent {
+    flex-grow: 1;
+}
+
 .tab-motors .mixerPreview img {
     width: 120px;
     height: 120px;
@@ -30,7 +51,8 @@
 .tab-motors .plot_control {
     float: right;
     width: 160px;
-    margin: 0px;
+    height: 197px;
+    margin: 0;
     background-color: #ECECEC;
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
@@ -45,22 +67,18 @@
   box-sizing: border-box;
 }
 
-.tab-motors .plot-control .sensor {
-}
-
 .tab-motors .plot_control .row-container {
   display: table-row-group;
 }
 
 .tab-motors .plot_control .motor-button a {
-  background-color: #ffbb00;
+  background-color: var(--accent);
   border-radius: 3px;
   border: 1px solid #e8b423;
   color: #000;
-  font-family: 'open_sansbold', Arial;
   font-size: 10px;
   line-height: 17px;
-  text-shadow: 0px 1px rgba(255, 255, 255, 0.25);
+  text-shadow: 0 1px rgba(255, 255, 255, 0.25);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   display: block;
@@ -83,7 +101,8 @@
 }
 .tab-motors .plot_control select {
   width: 100%;
-  border: 1px solid silver;
+  border: 1px solid var(--subtleAccent);
+  border-radius: 3px;
 }
 
 .tab-motors .plot_control .value {
@@ -175,19 +194,19 @@
 }
 
 .tab-motors .motorblock {
-    margin-bottom: 0px;
+    margin-bottom: 0;
     background-color: #ECECEC;
     /*background-image: -webkit-linear-gradient(top, transparent, rgba(0, 0, 0, 0.15));*/
 }
 
 .tab-motors .left.motors {
     float: left;
-    width: calc(50% - 50px);
+    width: calc(60% - 20px);
 }
 
 .tab-motors .right.servos {
     float: right;
-    width: 50%;
+    width: 40%;
 }
 
 .tab-motors .title {
@@ -200,7 +219,7 @@
     padding-bottom: 2px;
     text-align: center;
     font-size: 12px;
-    font-family: 'open_sanslight', Arial;
+    font-weight: 300;
 }
 
 .tab-motors .titles {
@@ -251,7 +270,12 @@
     bottom: 45px;
     text-align: center;
     font-weight: bold;
+    font-size: 10px;
     color: #474747;
+}
+
+.tab-motors .m-block .label.rpm_info {
+    bottom: 28px;
 }
 
 .tab-motors .m-block .indicator .label {
@@ -274,11 +298,11 @@
 }
 
 .tab-motors .motor_testing {
-    margin-top: 15px;
+    margin-top: 5px;
 }
 
 .tab-motors .motor_testing .left {
-    width: calc(50% - 50px);
+    width: calc(60% - 20px);
 }
 
 .tab-motors .motor_testing .sliders input {
@@ -289,29 +313,45 @@
 }
 
 .tab-motors .motor_testing .sliders input:first-child {
-    margin-left: 0px;
+    margin-left: 0;
 }
 
 .tab-motors .motor_testing .values {
     margin-top: 5px;
 }
 
-.tab-motors .motor_testing .values li:first-child {
-    margin-left: 0px;
+.tab-motors .motor_testing .telemetry {
+    display: flow-root;
+    margin-bottom: 5px;
 }
 
-.tab-motors .motor_testing .values li {
+.tab-motors .motor_testing .telemetry .warning {
+    color: var(--error);
+}
+
+.tab-motors .motor_testing .values li:first-child,
+.tab-motors .motor_testing .telemetry li:first-child {
+    margin-left: 0;
+}
+
+.tab-motors .motor_testing .values li,
+.tab-motors .motor_testing .telemetry li {
     float: left;
     width: calc((100% / 9) - 10px);
     margin-left: 10px;
     text-align: center;
+    font-size: 10px;
+}
+
+.tab-motors .motor_testing .telemetry li {
+    white-space: pre;
 }
 
 .tab-motors .motor_testing .notice {
     float: right;
-    width: calc(50% - 24px);
+    width: calc(40% - 24px);
     padding: 5px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--subtleAccent);
     border-radius: 3px;
     background-color: #FFFFFF;
     font-size: 11px;
@@ -323,4 +363,98 @@
 
 .tab-motors .motor_testing .notice .motorsEnableTestMode {
     margin-left: 10px;
+}
+
+@media all and (max-width: 575px) {
+    .tab-motors .modelAndGraph {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .tab-motors .mixerPreview {
+        order: 1;
+        width: calc(100% - 160px);
+    }
+    .tab-motors .mixerPreview img {
+        width: calc(100% - 20px);
+    }
+    .tab-motors #graph {
+        width: 100%;
+        order: 3;
+    }
+    .tab-motors .plot_control {
+        order: 2;
+    }
+    .tab-motors .power_info {
+        order: 4;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .tab-motors .motorblock {
+        margin-bottom: 15px;
+    }
+    .tab-motors .motorblock > .spacer {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .tab-motors .left.motors {
+        width: 100%;
+        order: 1;
+    }
+    .tab-motors .right.servos {
+        width: 100%;
+        order: 3;
+        margin-top: 15px;
+    }
+    .tab-motors .motor_testing {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        order: 2;
+    }
+    .tab-motors .motor_testing .notice {
+        width: 100%;
+        margin-top: 15px;
+    }
+    .tab-motors .titles li, .tab-motors .m-block {
+        width: calc((100% - 80px) / 9);
+    }
+    .tab-motors .titles li:last-child, .tab-motors .m-block:last-child {
+        margin-right: 0;
+    }
+    .tab-motors .motor_testing .left {
+        width: 100%;
+    }
+    .tab-motors .servos .m-block, .tab-motors .servos .titles li {
+        width: calc((100% - 70px) / 8);
+    }
+    .tab-motors .servos .m-block:last-child, .tab-motors .servos .titles li:last-child {
+        margin-left: 0;
+    }
+    .tab-motors .motor_testing .sliders {
+        margin-left: 2px;
+        margin-right: -2px;
+    }
+    .tab-motors .motor_testing .sliders input {
+        width: calc((100% - 108px) / 9);
+    }
+    .tab-motors .motor_testing .values li, .tab-motors .motor_testing .telemetry li {
+        width: calc((100% - 80px) / 9);
+    }
+    .tab-motors .motor_testing .values li:last-child {
+        margin-left: 4px;
+    }
+    .tab-motors .motor_testing .telemetry li {
+        font-size: 6px;
+    }
+    .tab-motors #dialogMotorOutputReorder {
+        position: fixed;
+        width: calc(100% - 2em);
+        bottom: 0;
+        top: 56px;
+        border-radius: unset;
+        border: none;
+        overflow: auto;
+        margin: 0;
+        height: auto;
+    }
 }

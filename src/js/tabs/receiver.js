@@ -32,7 +32,7 @@ TABS.receiver.initialize = function (callback) {
 
     function load_rc_configs() {
         var next_callback = load_rx_config;
-        if (semver.gte(CONFIG.apiVersion, "1.15.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.15.0")) {
             MSP.send_message(MSPCodes.MSP_RC_DEADBAND, false, false, next_callback);
         } else {
             next_callback();
@@ -41,7 +41,7 @@ TABS.receiver.initialize = function (callback) {
 
     function load_rx_config() {
         var next_callback = load_mixer_config;
-        if (semver.gte(CONFIG.apiVersion, "1.20.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.20.0")) {
             MSP.send_message(MSPCodes.MSP_RX_CONFIG, false, false, next_callback);
         } else {
             next_callback();
@@ -62,20 +62,12 @@ TABS.receiver.initialize = function (callback) {
         // translate to user-selected language
         i18n.localizePage();
 
-        chrome.storage.local.get('rx_refresh_rate', function (result) {
-            if (result.rx_refresh_rate) {
-                $('select[name="rx_refresh_rate"]').val(result.rx_refresh_rate).change();
-            } else {
-                $('select[name="rx_refresh_rate"]').change(); // start with default value
-            }
-        });
-
-        if (semver.lt(CONFIG.apiVersion, "1.15.0")) {
+        if (semver.lt(FC.CONFIG.apiVersion, "1.15.0")) {
             $('.deadband').hide();
         } else {
-            $('.deadband input[name="yaw_deadband"]').val(RC_DEADBAND_CONFIG.yaw_deadband);
-            $('.deadband input[name="deadband"]').val(RC_DEADBAND_CONFIG.deadband);
-            $('.deadband input[name="3ddeadbandthrottle"]').val(RC_DEADBAND_CONFIG.deadband3d_throttle);
+            $('.deadband input[name="yaw_deadband"]').val(FC.RC_DEADBAND_CONFIG.yaw_deadband);
+            $('.deadband input[name="deadband"]').val(FC.RC_DEADBAND_CONFIG.deadband);
+            $('.deadband input[name="3ddeadbandthrottle"]').val(FC.RC_DEADBAND_CONFIG.deadband3d_throttle);
 
             $('.deadband input[name="deadband"]').change(function () {
                 tab.deadband = parseInt($(this).val());
@@ -84,18 +76,18 @@ TABS.receiver.initialize = function (callback) {
                 tab.yawDeadband = parseInt($(this).val());
             }).change();
         }
-        
-        if (semver.lt(CONFIG.apiVersion, "1.15.0")) {
+
+        if (semver.lt(FC.CONFIG.apiVersion, "1.15.0")) {
             $('.sticks').hide();
         } else {
-            $('.sticks input[name="stick_min"]').val(RX_CONFIG.stick_min);
-            $('.sticks input[name="stick_center"]').val(RX_CONFIG.stick_center);
-            $('.sticks input[name="stick_max"]').val(RX_CONFIG.stick_max);
+            $('.sticks input[name="stick_min"]').val(FC.RX_CONFIG.stick_min);
+            $('.sticks input[name="stick_center"]').val(FC.RX_CONFIG.stick_center);
+            $('.sticks input[name="stick_max"]').val(FC.RX_CONFIG.stick_max);
         }
 
-        if (semver.gte(CONFIG.apiVersion, "1.20.0")) {
-            $('select[name="rcInterpolation-select"]').val(RX_CONFIG.rcInterpolation);
-            $('input[name="rcInterpolationInterval-number"]').val(RX_CONFIG.rcInterpolationInterval);
+        if (semver.gte(FC.CONFIG.apiVersion, "1.20.0")) {
+            $('select[name="rcInterpolation-select"]').val(FC.RX_CONFIG.rcInterpolation);
+            $('input[name="rcInterpolationInterval-number"]').val(FC.RX_CONFIG.rcInterpolationInterval);
 
             $('select[name="rcInterpolation-select"]').change(function () {
                 tab.updateRcInterpolationParameters();
@@ -114,7 +106,7 @@ TABS.receiver.initialize = function (callback) {
             bar_container = $('.tab-receiver .bars'),
             aux_index = 1;
 
-        var num_bars = (RC.active_channels > 0) ? RC.active_channels : 8;
+        var num_bars = (FC.RC.active_channels > 0) ? FC.RC.active_channels : 8;
 
         for (var i = 0; i < num_bars; i++) {
             var name;
@@ -130,7 +122,7 @@ TABS.receiver.initialize = function (callback) {
                     <li class="meter">\
                         <div class="meter-bar">\
                             <div class="label"></div>\
-                            <div class="fill' + (RC.active_channels == 0 ? 'disabled' : '') + '">\
+                            <div class="fill' + (FC.RC.active_channels == 0 ? 'disabled' : '') + '">\
                                 <div class="label"></div>\
                             </div>\
                         </div>\
@@ -172,8 +164,8 @@ TABS.receiver.initialize = function (callback) {
         var RC_MAP_Letters = ['A', 'E', 'R', 'T', '1', '2', '3', '4'];
 
         var strBuffer = [];
-        for (var i = 0; i < RC_MAP.length; i++) {
-            strBuffer[RC_MAP[i]] = RC_MAP_Letters[i];
+        for (var i = 0; i < FC.RC_MAP.length; i++) {
+            strBuffer[FC.RC_MAP[i]] = RC_MAP_Letters[i];
         }
 
         // reconstruct
@@ -231,44 +223,58 @@ TABS.receiver.initialize = function (callback) {
         var rssi_channel_e = $('select[name="rssi_channel"]');
         rssi_channel_e.append('<option value="0">' + i18n.getMessage("receiverRssiChannelDisabledOption") + '</option>');
         //1-4 reserved for Roll Pitch Yaw & Throttle, starting at 5
-        for (var i = 5; i < RC.active_channels + 1; i++) {
+        for (var i = 5; i < FC.RC.active_channels + 1; i++) {
             rssi_channel_e.append('<option value="' + i + '">' + i18n.getMessage("controlAxisAux" + (i-4)) + '</option>');
         }
 
-        $('select[name="rssi_channel"]').val(RSSI_CONFIG.channel);
+        $('select[name="rssi_channel"]').val(FC.RSSI_CONFIG.channel);
 
         var rateHeight = TABS.receiver.rateChartHeight;
 
         // UI Hooks
         $('a.refresh').click(function () {
-	    // Todo: refresh data here
+            tab.refresh(function () {
+                GUI.log(i18n.getMessage('receiverDataRefreshed'));
+            });
         });
 
         $('a.update').click(function () {
-            if (semver.gte(CONFIG.apiVersion, "1.15.0")) {
-                RX_CONFIG.stick_max = parseInt($('.sticks input[name="stick_max"]').val());
-                RX_CONFIG.stick_center = parseInt($('.sticks input[name="stick_center"]').val());
-                RX_CONFIG.stick_min = parseInt($('.sticks input[name="stick_min"]').val());
-                RC_DEADBAND_CONFIG.yaw_deadband = parseInt($('.deadband input[name="yaw_deadband"]').val());
-                RC_DEADBAND_CONFIG.deadband = parseInt($('.deadband input[name="deadband"]').val());
-                RC_DEADBAND_CONFIG.deadband3d_throttle = ($('.deadband input[name="3ddeadbandthrottle"]').val());
+            if (semver.gte(FC.CONFIG.apiVersion, "1.15.0")) {
+                FC.RX_CONFIG.stick_max = parseInt($('.sticks input[name="stick_max"]').val());
+                FC.RX_CONFIG.stick_center = parseInt($('.sticks input[name="stick_center"]').val());
+                FC.RX_CONFIG.stick_min = parseInt($('.sticks input[name="stick_min"]').val());
+                FC.RC_DEADBAND_CONFIG.yaw_deadband = parseInt($('.deadband input[name="yaw_deadband"]').val());
+                FC.RC_DEADBAND_CONFIG.deadband = parseInt($('.deadband input[name="deadband"]').val());
+                FC.RC_DEADBAND_CONFIG.deadband3d_throttle = ($('.deadband input[name="3ddeadbandthrottle"]').val());
             }
 
             // catch rc map
             var RC_MAP_Letters = ['A', 'E', 'R', 'T', '1', '2', '3', '4'];
             var strBuffer = $('input[name="rcmap"]').val().split('');
 
-            for (var i = 0; i < RC_MAP.length; i++) {
-                RC_MAP[i] = strBuffer.indexOf(RC_MAP_Letters[i]);
+            for (var i = 0; i < FC.RC_MAP.length; i++) {
+                FC.RC_MAP[i] = strBuffer.indexOf(RC_MAP_Letters[i]);
             }
 
             // catch rssi aux
-            RSSI_CONFIG.channel = parseInt($('select[name="rssi_channel"]').val());
+            FC.RSSI_CONFIG.channel = parseInt($('select[name="rssi_channel"]').val());
 
 
-            if (semver.gte(CONFIG.apiVersion, "1.20.0")) {
-                RX_CONFIG.rcInterpolation = parseInt($('select[name="rcInterpolation-select"]').val());
-                RX_CONFIG.rcInterpolationInterval = parseInt($('input[name="rcInterpolationInterval-number"]').val());
+            if (semver.gte(FC.CONFIG.apiVersion, "1.20.0")) {
+                FC.RX_CONFIG.rcInterpolation = parseInt($('select[name="rcInterpolation-select"]').val());
+                FC.RX_CONFIG.rcInterpolationInterval = parseInt($('input[name="rcInterpolationInterval-number"]').val());
+            }
+
+            if (semver.gte(FC.CONFIG.apiVersion, "1.40.0")) {
+                FC.RX_CONFIG.rcSmoothingInputCutoff = parseInt($('input[name="rcSmoothingInputHz-number"]').val());
+                FC.RX_CONFIG.rcSmoothingDerivativeCutoff = parseInt($('input[name="rcSmoothingDerivativeCutoff-number"]').val());
+                FC.RX_CONFIG.rcSmoothingDerivativeType = parseInt($('select[name="rcSmoothingDerivativeType-select"]').val());
+                FC.RX_CONFIG.rcInterpolationChannels = parseInt($('select[name="rcSmoothingChannels-select"]').val());
+                FC.RX_CONFIG.rcSmoothingInputType = parseInt($('select[name="rcSmoothingInputType-select"]').val());
+            }
+
+            if (semver.gte(FC.CONFIG.apiVersion, "1.42.0")) {
+                FC.RX_CONFIG.rcSmoothingAutoSmoothness = parseInt($('input[name="rcSmoothingAutoSmoothness-number"]').val());
             }
 
             function save_rssi_config() {
@@ -277,7 +283,7 @@ TABS.receiver.initialize = function (callback) {
 
             function save_rc_configs() {
                 var next_callback = save_rx_config;
-                if (semver.gte(CONFIG.apiVersion, "1.15.0")) {
+                if (semver.gte(FC.CONFIG.apiVersion, "1.15.0")) {
                     MSP.send_message(MSPCodes.MSP_SET_RC_DEADBAND, mspHelper.crunch(MSPCodes.MSP_SET_RC_DEADBAND), false, next_callback);
                 } else {
                     next_callback();
@@ -286,7 +292,7 @@ TABS.receiver.initialize = function (callback) {
 
             function save_rx_config() {
                 var next_callback = save_to_eeprom;
-                if (semver.gte(CONFIG.apiVersion, "1.20.0")) {
+                if (semver.gte(FC.CONFIG.apiVersion, "1.20.0")) {
                     MSP.send_message(MSPCodes.MSP_SET_RX_CONFIG, mspHelper.crunch(MSPCodes.MSP_SET_RX_CONFIG), false, next_callback);
                 } else {
                     next_callback();
@@ -325,85 +331,99 @@ TABS.receiver.initialize = function (callback) {
                         return false;
                     }
                 }
+
+                windowWatcherUtil.passValue(createdWindow, 'darkTheme', DarkTheme.isDarkThemeEnabled(DarkTheme.configEnabled));
+
             });
         });
 
+        let showBindButton = false;
+        if (semver.gte(FC.CONFIG.apiVersion, API_VERSION_1_43)) {
+            showBindButton = bit_check(FC.CONFIG.targetCapabilities, FC.TARGET_CAPABILITIES_FLAGS.SUPPORTS_RX_BIND);
+
+            $("a.bind").click(function() {
+                MSP.send_message(MSPCodes.MSP2_BETAFLIGHT_BIND);
+
+                GUI.log(i18n.getMessage('receiverButtonBindMessage'));
+            });
+        }
+        $(".bind_btn").toggle(showBindButton);
+
         // RC Smoothing
-        if (semver.gte(CONFIG.apiVersion, "1.40.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.40.0")) {
             $('.tab-receiver .rcSmoothing').show();
 
             var rc_smoothing_protocol_e = $('select[name="rcSmoothing-select"]');
             rc_smoothing_protocol_e.change(function () {
-                RX_CONFIG.rcSmoothingType = $(this).val();
+                FC.RX_CONFIG.rcSmoothingType = $(this).val();
                 updateInterpolationView();
             });
-            rc_smoothing_protocol_e.val(RX_CONFIG.rcSmoothingType);
+            rc_smoothing_protocol_e.val(FC.RX_CONFIG.rcSmoothingType);
 
-            var rcSmoothingnNumberElement = $('input[name="rcSmoothingInputHz-number"]');
-            var rcSmoothingnDerivativeNumberElement = $('input[name="rcSmoothingDerivativeCutoff-number"]');
-            
+            const rcSmoothingNumberElement = $('input[name="rcSmoothingInputHz-number"]');
+            const rcSmoothingDerivativeNumberElement = $('input[name="rcSmoothingDerivativeCutoff-number"]');
+            rcSmoothingNumberElement.val(FC.RX_CONFIG.rcSmoothingInputCutoff);
+            rcSmoothingDerivativeNumberElement.val(FC.RX_CONFIG.rcSmoothingDerivativeCutoff);
             $('.tab-receiver .rcSmoothing-input-cutoff').show();
             $('select[name="rcSmoothing-input-manual-select"]').val("1");
-            $('.tab-receiver .rc-smoothing-input-blank').hide();
-            if (RX_CONFIG.rcSmoothingInputCutoff == 0) {
+            if (FC.RX_CONFIG.rcSmoothingInputCutoff == 0) {
                 $('.tab-receiver .rcSmoothing-input-cutoff').hide();
                 $('select[name="rcSmoothing-input-manual-select"]').val("0");
-                $('.tab-receiver .rc-smoothing-input-blank').show();
             }
             $('select[name="rcSmoothing-input-manual-select"]').change(function () {
                 if ($(this).val() == 0) {
-                    RX_CONFIG.rcSmoothingInputCutoff = 0;
+                    rcSmoothingNumberElement.val(0);
                     $('.tab-receiver .rcSmoothing-input-cutoff').hide();
                 }
                 if ($(this).val() == 1) {
-                    rcSmoothingnNumberElement.val(RX_CONFIG.rcSmoothingInputCutoff);
+                    rcSmoothingNumberElement.val(FC.RX_CONFIG.rcSmoothingInputCutoff);
                     $('.tab-receiver .rcSmoothing-input-cutoff').show();
-                } 
-            });
+                }
+            }).change();
 
             $('.tab-receiver .rcSmoothing-derivative-cutoff').show();
             $('select[name="rcSmoothing-input-derivative-select"]').val("1");
-            $('.tab-receiver .rc-smoothing-derivative-blank').hide();
-            if (RX_CONFIG.rcSmoothingDerivativeCutoff == 0) {
+            if (FC.RX_CONFIG.rcSmoothingDerivativeCutoff == 0) {
                 $('select[name="rcSmoothing-input-derivative-select"]').val("0");
                 $('.tab-receiver .rcSmoothing-derivative-cutoff').hide();
-                $('.tab-receiver .rc-smoothing-derivative-blank').show();
             }
             $('select[name="rcSmoothing-input-derivative-select"]').change(function () {
                 if ($(this).val() == 0) {
                     $('.tab-receiver .rcSmoothing-derivative-cutoff').hide();
-                    RX_CONFIG.rcSmoothingDerivativeCutoff = 0;
+                    rcSmoothingDerivativeNumberElement.val(0);
                 }
                 if ($(this).val() == 1) {
                     $('.tab-receiver .rcSmoothing-derivative-cutoff').show();
-                    rcSmoothingnDerivativeNumberElement.val(RX_CONFIG.rcSmoothingDerivativeCutoff);
+                    rcSmoothingDerivativeNumberElement.val(FC.RX_CONFIG.rcSmoothingDerivativeCutoff);
                 }
-            });
-            
-            rcSmoothingnNumberElement.change(function () {
-                RX_CONFIG.rcSmoothingInputCutoff = $(this).val();
-            });
-            rcSmoothingnNumberElement.val(RX_CONFIG.rcSmoothingInputCutoff);
+            }).change();
 
-            rcSmoothingnDerivativeNumberElement.change(function () {
-                RX_CONFIG.rcSmoothingDerivativeCutoff = $(this).val();
-            });
-            rcSmoothingnDerivativeNumberElement.val(RX_CONFIG.rcSmoothingDerivativeCutoff);
             var rc_smoothing_derivative_type = $('select[name="rcSmoothingDerivativeType-select"]');
-            rc_smoothing_derivative_type.change(function () {
-                RX_CONFIG.rcSmoothingDerivativeType = $(this).val();
-            });
-            rc_smoothing_derivative_type.val(RX_CONFIG.rcSmoothingDerivativeType);
+            if (semver.gte(FC.CONFIG.apiVersion, API_VERSION_1_43)) {
+                rc_smoothing_derivative_type.append($(`<option value="3">${i18n.getMessage("receiverRcSmoothingDerivativeTypeAuto")}</option>`));
+            }
+
+            rc_smoothing_derivative_type.val(FC.RX_CONFIG.rcSmoothingDerivativeType);
             var rc_smoothing_channels = $('select[name="rcSmoothingChannels-select"]');
-            rc_smoothing_channels.change(function () {
-                RX_CONFIG.rcInterpolationChannels = $(this).val();
-            });
-            rc_smoothing_channels.val(RX_CONFIG.rcInterpolationChannels);
+            rc_smoothing_channels.val(FC.RX_CONFIG.rcInterpolationChannels);
             var rc_smoothing_input_type = $('select[name="rcSmoothingInputType-select"]');
-            rc_smoothing_input_type.change(function () {
-                RX_CONFIG.rcSmoothingInputType = $(this).val();
-            });
-            rc_smoothing_input_type.val(RX_CONFIG.rcSmoothingInputType);
+            rc_smoothing_input_type.val(FC.RX_CONFIG.rcSmoothingInputType);
+
+            if (semver.gte(FC.CONFIG.apiVersion, "1.42.0")) {
+                $('select[name="rcSmoothing-input-manual-select"], select[name="rcSmoothing-input-derivative-select"]').change(function() {
+                    if ($('select[name="rcSmoothing-input-manual-select"]').val() == 0 || $('select[name="rcSmoothing-input-derivative-select"]').val() == 0) {
+                        $('.tab-receiver .rcSmoothing-auto-smoothness').show();
+                    } else {
+                        $('.tab-receiver .rcSmoothing-auto-smoothness').hide();
+                    }
+                });
+                $('select[name="rcSmoothing-input-manual-select"]').change();
+
+                var rc_smoothing_auto_smoothness = $('input[name="rcSmoothingAutoSmoothness-number"]');
+                rc_smoothing_auto_smoothness.val(FC.RX_CONFIG.rcSmoothingAutoSmoothness);
+            } else {
+                $('.tab-receiver .rcSmoothing-auto-smoothness').hide();
+            }
 
             updateInterpolationView();
         } else {
@@ -415,23 +435,52 @@ TABS.receiver.initialize = function (callback) {
             $('.tab-receiver .rcSmoothing-derivative-manual').hide();
             $('.tab-receiver .rcSmoothing-input-manual').hide();
             $('.tab-receiver .rc-smoothing-type').hide();
+            $('.tab-receiver .rcSmoothing-auto-smoothness').hide();
         }
 
         // Only show the MSP control sticks if the MSP Rx feature is enabled
-        $(".sticks_btn").toggle(FEATURE_CONFIG.features.isEnabled('RX_MSP'));
+        $(".sticks_btn").toggle(FC.FEATURE_CONFIG.features.isEnabled('RX_MSP'));
 
-        $('select[name="rx_refresh_rate"]').change(function () {
-            var plot_update_rate = parseInt($(this).val(), 10);
+        const labelsChannelData = {
+            ch1: [],
+            ch2: [],
+            ch3: [],
+            ch4: [],
+        };
+
+        $(`.plot_control .ch1, .plot_control .ch2, .plot_control .ch3, .plot_control .ch4`).each(function (){
+            const element = $(this);
+            if (element.hasClass('ch1')){
+                labelsChannelData.ch1.push(element);
+            } else if (element.hasClass('ch2')){
+                labelsChannelData.ch2.push(element);
+            } else if (element.hasClass('ch3')){
+                labelsChannelData.ch3.push(element);
+            } else if (element.hasClass('ch4')){
+                labelsChannelData.ch4.push(element);
+            }
+        });
+        
+        let plotUpdateRate;
+        const rxRefreshRate = $('select[name="rx_refresh_rate"]');
+
+        $('a.reset_rate').click(function () {
+            plotUpdateRate = 50;
+            rxRefreshRate.val(plotUpdateRate).change();
+        });
+
+        rxRefreshRate.change(function () {
+            plotUpdateRate = parseInt($(this).val(), 10);
 
             // save update rate
-            chrome.storage.local.set({'rx_refresh_rate': plot_update_rate});
+            ConfigStorage.set({'rx_refresh_rate': plotUpdateRate});
 
             function get_rc_data() {
                 MSP.send_message(MSPCodes.MSP_RC, false, false, update_ui);
             }
 
             // setup plot
-            var RX_plot_data = new Array(RC.active_channels);
+            var RX_plot_data = new Array(FC.RC.active_channels);
             for (var i = 0; i < RX_plot_data.length; i++) {
                 RX_plot_data[i] = [];
             }
@@ -451,22 +500,32 @@ TABS.receiver.initialize = function (callback) {
             }
 
             function update_ui() {
-                // update bars with latest data
-                for (var i = 0; i < RC.active_channels; i++) {
-                    meter_fill_array[i].css('width', ((RC.channels[i] - meter_scale.min) / (meter_scale.max - meter_scale.min) * 100).clamp(0, 100) + '%');
-                    meter_label_array[i].text(RC.channels[i]);
-                }
 
-                // push latest data to the main array
-                for (var i = 0; i < RC.active_channels; i++) {
-                    RX_plot_data[i].push([samples, RC.channels[i]]);
-                }
+                if (FC.RC.active_channels > 0) {
 
-                // Remove old data from array
-                while (RX_plot_data.length > 300) {
-                    for (var i = 0; i < RX_plot_data.length; i++) {
-                        RX_plot_data[i].shift();
+                    // update bars with latest data
+                    for (var i = 0; i < FC.RC.active_channels; i++) {
+                        meter_fill_array[i].css('width', ((FC.RC.channels[i] - meter_scale.min) / (meter_scale.max - meter_scale.min) * 100).clamp(0, 100) + '%');
+                        meter_label_array[i].text(FC.RC.channels[i]);
                     }
+
+                    labelsChannelData.ch1[0].text(FC.RC.channels[0]);
+                    labelsChannelData.ch2[0].text(FC.RC.channels[1]);
+                    labelsChannelData.ch3[0].text(FC.RC.channels[2]);
+                    labelsChannelData.ch4[0].text(FC.RC.channels[3]);
+    
+                    // push latest data to the main array
+                    for (var i = 0; i < FC.RC.active_channels; i++) {
+                        RX_plot_data[i].push([samples, FC.RC.channels[i]]);
+                    }
+
+                    // Remove old data from array
+                    while (RX_plot_data[0].length > 300) {
+                        for (var i = 0; i < RX_plot_data.length; i++) {
+                            RX_plot_data[i].shift();
+                        }
+                    }
+
                 }
 
                 // update required parts of the plot
@@ -521,7 +580,15 @@ TABS.receiver.initialize = function (callback) {
             GUI.interval_remove('receiver_pull');
 
             // enable RC data pulling
-            GUI.interval_add('receiver_pull', get_rc_data, plot_update_rate, true);
+            GUI.interval_add('receiver_pull', get_rc_data, plotUpdateRate, true);
+        });
+
+        ConfigStorage.get('rx_refresh_rate', function (result) {
+            if (result.rxRefreshRate) {
+                rxRefreshRate.val(result.rxRefreshRate).change();
+            } else {
+                rxRefreshRate.change(); // start with default value
+            }
         });
 
         // Setup model for preview
@@ -529,7 +596,7 @@ TABS.receiver.initialize = function (callback) {
         tab.renderModel();
 
         // TODO: Combine two polls together
-        GUI.interval_add('receiver_pull_for_model_preview', tab.getRecieverData, 33, false);
+        GUI.interval_add('receiver_pull_for_model_preview', tab.getReceiverData, 33, false);
 
         // status data pulled via separate timer with static speed
         GUI.interval_add('status_pull', function status_pull() {
@@ -540,7 +607,7 @@ TABS.receiver.initialize = function (callback) {
     }
 };
 
-TABS.receiver.getRecieverData = function () {
+TABS.receiver.getReceiverData = function () {
     MSP.send_message(MSPCodes.MSP_RC, false, false);
 };
 
@@ -549,18 +616,18 @@ TABS.receiver.initModelPreview = function () {
     this.model = new Model($('.model_preview'), $('.model_preview canvas'));
 
     this.useSuperExpo = false;
-    if (semver.gte(CONFIG.apiVersion, "1.20.0") || (semver.gte(CONFIG.apiVersion, "1.16.0") && FEATURE_CONFIG.features.isEnabled('SUPEREXPO_RATES'))) {
+    if (semver.gte(FC.CONFIG.apiVersion, "1.20.0") || (semver.gte(FC.CONFIG.apiVersion, "1.16.0") && FC.FEATURE_CONFIG.features.isEnabled('SUPEREXPO_RATES'))) {
         this.useSuperExpo = true;
     }
 
     var useOldRateCurve = false;
-    if (CONFIG.flightControllerIdentifier == 'CLFL' && semver.lt(CONFIG.apiVersion, '2.0.0')) {
+    if (FC.CONFIG.flightControllerIdentifier == 'CLFL' && semver.lt(FC.CONFIG.apiVersion, '2.0.0')) {
         useOldRateCurve = true;
     }
-    if (CONFIG.flightControllerIdentifier == 'BTFL' && semver.lt(CONFIG.flightControllerVersion, '2.8.0')) {
+    if (FC.CONFIG.flightControllerIdentifier == 'BTFL' && semver.lt(FC.CONFIG.flightControllerVersion, '2.8.0')) {
         useOldRateCurve = true;
     }
-        
+
     this.rateCurve = new RateCurve(useOldRateCurve);
 
     $(window).on('resize', $.proxy(this.model.resize, this.model));
@@ -571,12 +638,12 @@ TABS.receiver.renderModel = function () {
 
     if (!this.clock) { this.clock = new THREE.Clock(); }
 
-    if (RC.channels[0] && RC.channels[1] && RC.channels[2]) {
+    if (FC.RC.channels[0] && FC.RC.channels[1] && FC.RC.channels[2]) {
         var delta = this.clock.getDelta();
 
-        var roll  = delta * this.rateCurve.rcCommandRawToDegreesPerSecond(RC.channels[0], RC_tuning.roll_rate, RC_tuning.RC_RATE, RC_tuning.RC_EXPO, this.useSuperExpo, this.deadband, RC_tuning.roll_rate_limit),
-            pitch = delta * this.rateCurve.rcCommandRawToDegreesPerSecond(RC.channels[1], RC_tuning.pitch_rate, RC_tuning.rcPitchRate, RC_tuning.RC_PITCH_EXPO, this.useSuperExpo, this.deadband, RC_tuning.pitch_rate_limit),
-            yaw   = delta * this.rateCurve.rcCommandRawToDegreesPerSecond(RC.channels[2], RC_tuning.yaw_rate, RC_tuning.rcYawRate, RC_tuning.RC_YAW_EXPO, this.useSuperExpo, this.yawDeadband, RC_tuning.yaw_rate_limit);
+        var roll  = delta * this.rateCurve.rcCommandRawToDegreesPerSecond(FC.RC.channels[0], FC.RC_TUNING.roll_rate, FC.RC_TUNING.RC_RATE, FC.RC_TUNING.RC_EXPO, this.useSuperExpo, this.deadband, FC.RC_TUNING.roll_rate_limit),
+            pitch = delta * this.rateCurve.rcCommandRawToDegreesPerSecond(FC.RC.channels[1], FC.RC_TUNING.pitch_rate, FC.RC_TUNING.rcPitchRate, FC.RC_TUNING.RC_PITCH_EXPO, this.useSuperExpo, this.deadband, FC.RC_TUNING.pitch_rate_limit),
+            yaw   = delta * this.rateCurve.rcCommandRawToDegreesPerSecond(FC.RC.channels[2], FC.RC_TUNING.yaw_rate, FC.RC_TUNING.rcYawRate, FC.RC_TUNING.RC_YAW_EXPO, this.useSuperExpo, this.yawDeadband, FC.RC_TUNING.yaw_rate_limit);
 
         this.model.rotateBy(-degToRad(pitch), -degToRad(yaw), -degToRad(roll));
     }
@@ -587,6 +654,7 @@ TABS.receiver.cleanup = function (callback) {
     $(window).off('resize', this.resize);
     if (this.model) {
         $(window).off('resize', $.proxy(this.model.resize, this.model));
+        this.model.dispose();
     }
 
     this.keepRendering = false;
@@ -594,8 +662,20 @@ TABS.receiver.cleanup = function (callback) {
     if (callback) callback();
 };
 
+TABS.receiver.refresh = function (callback) {
+    var self = this;
+
+    GUI.tab_switch_cleanup(function () {
+        self.initialize();
+
+        if (callback) {
+            callback();
+        }
+    });
+};
+
 TABS.receiver.updateRcInterpolationParameters = function () {
-    if (semver.gte(CONFIG.apiVersion, "1.20.0")) {
+    if (semver.gte(FC.CONFIG.apiVersion, "1.20.0")) {
         if ($('select[name="rcInterpolation-select"]').val() === '3') {
             $('.tab-receiver .rc-interpolation-manual').show();
         } else {
@@ -612,8 +692,13 @@ function updateInterpolationView() {
     $('.tab-receiver .rcSmoothing-input-type').show();
     $('.tab-receiver .rcSmoothing-derivative-manual').show();
     $('.tab-receiver .rcSmoothing-input-manual').show();
+    if (semver.gte(FC.CONFIG.apiVersion, "1.42.0")) {
+        if (FC.RX_CONFIG.rcSmoothingDerivativeCutoff == 0 || FC.RX_CONFIG.rcSmoothingInputCutoff == 0) {
+            $('.tab-receiver .rcSmoothing-auto-smoothness').show();
+        }
+    }
 
-    if (parseInt(RX_CONFIG.rcSmoothingType) === 0) {
+    if (FC.RX_CONFIG.rcSmoothingType == 0) {
         $('.tab-receiver .rcInterpolation').show();
         $('.tab-receiver .rcSmoothing-derivative-cutoff').hide();
         $('.tab-receiver .rcSmoothing-input-cutoff').hide();
@@ -621,11 +706,12 @@ function updateInterpolationView() {
         $('.tab-receiver .rcSmoothing-input-type').hide();
         $('.tab-receiver .rcSmoothing-derivative-manual').hide();
         $('.tab-receiver .rcSmoothing-input-manual').hide();
+        $('.tab-receiver .rcSmoothing-auto-smoothness').hide();
     }
-    if (parseInt(RX_CONFIG.rcSmoothingDerivativeCutoff) === 0) {
+    if (FC.RX_CONFIG.rcSmoothingDerivativeCutoff == 0) {
         $('.tab-receiver .rcSmoothing-derivative-cutoff').hide();
     }
-    if (parseInt(RX_CONFIG.rcSmoothingInputCutoff) === 0) {
+    if (FC.RX_CONFIG.rcSmoothingInputCutoff == 0) {
         $('.tab-receiver .rcSmoothing-input-cutoff').hide();
     }
 }

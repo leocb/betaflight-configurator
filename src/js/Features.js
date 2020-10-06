@@ -7,8 +7,8 @@ var Features = function (config) {
         {bit: 0, group: 'rxMode', mode: 'select', name: 'RX_PPM'},
         {bit: 2, group: 'other', name: 'INFLIGHT_ACC_CAL'},
         {bit: 3, group: 'rxMode', mode: 'select', name: 'RX_SERIAL'},
-        {bit: 4, group: 'esc', name: 'MOTOR_STOP'},
-        {bit: 5, group: 'other', name: 'SERVO_TILT'},
+        {bit: 4, group: 'escMotorStop', name: 'MOTOR_STOP'},
+        {bit: 5, group: 'other', name: 'SERVO_TILT', haveTip: true},
         {bit: 6, group: 'other', name: 'SOFTSERIAL', haveTip: true},
         {bit: 7, group: 'gps', name: 'GPS', haveTip: true},
         {bit: 9, group: 'other', name: 'SONAR'},
@@ -33,29 +33,29 @@ var Features = function (config) {
         );
     }
 
-    if (semver.gte(CONFIG.apiVersion, "1.15.0") && !semver.gte(CONFIG.apiVersion, "1.36.0")) {
+    if (semver.gte(FC.CONFIG.apiVersion, "1.15.0") && !semver.gte(FC.CONFIG.apiVersion, "1.36.0")) {
         features.push(
             {bit: 8, group: 'rxFailsafe', name: 'FAILSAFE', haveTip: true}
         );
     }
 
-    if (semver.gte(CONFIG.apiVersion, "1.16.0")) {
+    if (semver.gte(FC.CONFIG.apiVersion, "1.16.0")) {
         features.push(
             {bit: 21, group: 'other', name: 'TRANSPONDER', haveTip: true}
         );
     }
 
     if (config.flightControllerVersion !== '') {
-        if (semver.gte(CONFIG.apiVersion, "1.16.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.16.0")) {
             features.push(
                 {bit: 22, group: 'other', name: 'AIRMODE'}
             );
         }
 
-        if (semver.gte(CONFIG.apiVersion, "1.16.0")) {
-            if (semver.lt(CONFIG.apiVersion, "1.20.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.16.0")) {
+            if (semver.lt(FC.CONFIG.apiVersion, "1.20.0")) {
                 features.push(
-                    {bit: 23, group: 'pidTuning', name: 'SUPEREXPO_RATES'}
+                    {bit: 23, group: 'superexpoRates', name: 'SUPEREXPO_RATES'}
                 );
             } else if (!semver.gte(config.apiVersion, "1.33.0")) {
                 features.push(
@@ -64,32 +64,32 @@ var Features = function (config) {
             }
         }
 
-        if (semver.gte(CONFIG.apiVersion, "1.20.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.20.0")) {
             features.push(
                 {bit: 18, group: 'other', name: 'OSD'}
             );
-            if (!semver.gte(CONFIG.apiVersion, "1.35.0")) {
+            if (!semver.gte(FC.CONFIG.apiVersion, "1.35.0")) {
               features.push(
                 {bit: 24, group: 'other', name: 'VTX'}
               )
             }
         }
 
-        if (semver.gte(CONFIG.apiVersion, "1.31.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.31.0")) {
             features.push(
                 {bit: 25, group: 'rxMode', mode: 'select', name: 'RX_SPI'},
-                {bit: 27, group: 'other', name: 'ESC_SENSOR'}
+                {bit: 27, group: 'escSensor', name: 'ESC_SENSOR'}
             );
         }
 
-        if (semver.gte(CONFIG.apiVersion, "1.36.0")) {
+        if (semver.gte(FC.CONFIG.apiVersion, "1.36.0")) {
             features.push(
-                {bit: 28, group: 'other', name: 'ANTI_GRAVITY'},
+                {bit: 28, group: 'antiGravity', name: 'ANTI_GRAVITY', haveTip: true, hideName: true},
                 {bit: 29, group: 'other', name: 'DYNAMIC_FILTER'}
             );
         }
 
-        if (!semver.gte(CONFIG.apiVersion, "1.36.0")) {
+        if (!semver.gte(FC.CONFIG.apiVersion, "1.36.0")) {
             features.push(
                 {bit: 1, group: 'batteryVoltage', name: 'VBAT'},
                 {bit: 11, group: 'batteryCurrent', name: 'CURRENT_METER'}
@@ -161,17 +161,21 @@ Features.prototype.generateElements = function (featuresElements) {
             newElements.push(newElement);
             listElements.push(newElement);
         } else {
+            let featureName = '';
+            if (!self._features[i].hideName) {
+                featureName = `<td><div>${self._features[i].name}</div></td>`;
+            }
+
             var newElement = $('<tr><td><input class="feature toggle" id="feature-'
                     + i
                     + '" name="'
                     + self._features[i].name
                     + '" title="'
                     + self._features[i].name
-                    + '" type="checkbox"/></td><td><label for="feature-'
-                    + i
-                    + '">'
-                    + self._features[i].name
-                    + '</label></td><td><span i18n="feature' + self._features[i].name + '"></span>'
+                    + '" type="checkbox"/></td><td><div>'
+                    + featureName
+                    + '</div><span class="xs" i18n="feature' + self._features[i].name + '"></span></td>'
+                    + '<td><span class="sm-min" i18n="feature' + self._features[i].name + '"></span>'
                     + feature_tip_html + '</td></tr>');
 
             var feature_e = newElement.find('input.feature');

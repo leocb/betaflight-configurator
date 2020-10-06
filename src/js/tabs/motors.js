@@ -9,8 +9,24 @@ TABS.motors = {
         sensorAccelRate: 20,
         sensorAccelScale: 2,
         sensorSelectValues: {
-            "gyroScale": {"50":50,"100":100,"200":200,"300":300,"400":400,"500":500,"1000":1000,"2000":2000},
-            "accelScale": {"0.05":0.05,"0.1":0.1,"0.2":0.2,"0.3":0.3,"0.4":0.4,"0.5":0.5,"1":1,"2":2}
+            "gyroScale": {"10" : 10, 
+                          "25" : 25, 
+                          "50" : 50, 
+                          "100" : 100, 
+                          "200" : 200, 
+                          "300" : 300, 
+                          "400" : 400,
+                          "500" : 500,
+                          "1000" : 1000,
+                          "2000" : 2000},
+            "accelScale": {"0.05" : 0.05,
+                           "0.1" : 0.1,
+                           "0.2" : 0.2,
+                           "0.3" : 0.3,
+                           "0.4" : 0.4,
+                           "0.5" : 0.5,
+                           "1" : 1,
+                           "2" : 2}
         },
         // These are translated into proper Dshot values on the flight controller
         DSHOT_DISARMED_VALUE: 1000,
@@ -41,11 +57,23 @@ TABS.motors.initialize = function (callback) {
     }
 
     function load_esc_protocol() {
-        MSP.send_message(MSPCodes.MSP_ADVANCED_CONFIG, false, false, load_motor_data);
+        MSP.send_message(MSPCodes.MSP_ADVANCED_CONFIG, false, false, load_motor_output_reordering);
+    }
+
+    function load_motor_output_reordering() {
+        MSP.send_message(MSPCodes.MSP2_MOTOR_OUTPUT_REORDERING, false, false, load_motor_data);
     }
 
     function load_motor_data() {
-        MSP.send_message(MSPCodes.MSP_MOTOR, false, false, load_mixer_config);
+        MSP.send_message(MSPCodes.MSP_MOTOR, false, false, load_motor_telemetry_data);
+    }
+
+    function load_motor_telemetry_data() {
+        if (FC.MOTOR_CONFIG.use_dshot_telemetry || FC.MOTOR_CONFIG.use_esc_sensor) {
+            MSP.send_message(MSPCodes.MSP_MOTOR_TELEMETRY, false, false, load_mixer_config);
+        } else {
+            load_mixer_config();
+        }
     }
 
     function load_mixer_config() {
@@ -57,7 +85,7 @@ TABS.motors.initialize = function (callback) {
     }
 
     // Get information from Betaflight
-    if (semver.gte(CONFIG.apiVersion, "1.36.0")) {
+    if (semver.gte(FC.CONFIG.apiVersion, "1.36.0")) {
         // BF 3.2.0+
         MSP.send_message(MSPCodes.MSP_MOTOR_CONFIG, false, false, get_arm_status);
     } else {
@@ -66,13 +94,13 @@ TABS.motors.initialize = function (callback) {
     }
 
     function update_arm_status() {
-        self.armed = bit_check(CONFIG.mode, 0);
+        self.armed = bit_check(FC.CONFIG.mode, 0);
     }
 
     function initSensorData() {
         for (var i = 0; i < 3; i++) {
-            SENSOR_DATA.accelerometer[i] = 0;
-            SENSOR_DATA.gyroscope[i] = 0;
+            FC.SENSOR_DATA.accelerometer[i] = 0;
+            FC.SENSOR_DATA.gyroscope[i] = 0;
         }
     }
 
@@ -193,11 +221,18 @@ TABS.motors.initialize = function (callback) {
     function update_model(mixer) {
         var reverse = "";
 
-        if (semver.gte(CONFIG.apiVersion, "1.36.0")) {
-            reverse = MIXER_CONFIG.reverseMotorDir ? "_reversed" : "";
+        if (semver.gte(FC.CONFIG.apiVersion, "1.36.0")) {
+            reverse = FC.MIXER_CONFIG.reverseMotorDir ? "_reversed" : "";
         }
 
         $('.mixerPreview img').attr('src', './resources/motor_order/' + mixerList[mixer - 1].image + reverse + '.svg');
+
+        const motorOutputReorderConfig = new MotorOutputReorderConfig(100);
+        const domMotorOutputReorderDialogOpen = $('#motorOutputReorderDialogOpen');
+
+        const isMotorReorderingAvailable = (mixerList[mixer - 1].name in motorOutputReorderConfig)
+            && (FC.MOTOR_OUTPUT_ORDER) && (FC.MOTOR_OUTPUT_ORDER.length > 0);
+        domMotorOutputReorderDialogOpen.toggle(isMotorReorderingAvailable);
     }
 
     function process_html() {
@@ -206,9 +241,9 @@ TABS.motors.initialize = function (callback) {
 
         update_arm_status();
 
-        self.feature3DEnabled = FEATURE_CONFIG.features.isEnabled('3D');
+        self.feature3DEnabled = FC.FEATURE_CONFIG.features.isEnabled('3D');
 
-        if (PID_ADVANCED_CONFIG.fast_pwm_protocol >= TABS.configuration.DSHOT_PROTOCOL_MIN_VALUE) {
+        if (FC.PID_ADVANCED_CONFIG.fast_pwm_protocol >= TABS.configuration.DSHOT_PROTOCOL_MIN_VALUE) {
             self.escProtocolIsDshot = true;
         } else {
             self.escProtocolIsDshot = false;
@@ -216,7 +251,16 @@ TABS.motors.initialize = function (callback) {
 
         $('#motorsEnableTestMode').prop('checked', false);
 
-        update_model(MIXER_CONFIG.mixer);
+        if (semver.lt(FC.CONFIG.apiVersion, "1.42.0") || !(FC.MOTOR_CONFIG.use_dshot_telemetry || FC.MOTOR_CONFIG.use_esc_sensor)) {
+            $(".motor_testing .telemetry").hide();
+        } else {
+            // Hide telemetry from unused motors (to hide the tooltip in an empty blank space)
+            for (let i = FC.MOTOR_CONFIG.motor_count; i < FC.MOTOR_DATA.length; i++) {
+                $(".motor_testing .telemetry .motor-" + i).hide();
+            }
+        }
+
+        update_model(FC.MIXER_CONFIG.mixer);
 
         // Always start with default/empty sensor data array, clean slate all
         initSensorData();
@@ -260,26 +304,6 @@ TABS.motors.initialize = function (callback) {
             }
         });
 
-        // set refresh speeds according to configuration saved in storage
-        chrome.storage.local.get(['motors_tab_sensor_settings', 'motors_tab_gyro_settings', 'motors_tab_accel_settings'], function (result) {
-            if (result.motors_tab_sensor_settings) {
-                var sensor = result.motors_tab_sensor_settings.sensor;
-                $('.tab-motors select[name="sensor_choice"]').val(result.motors_tab_sensor_settings.sensor);
-            }
-
-            if (result.motors_tab_gyro_settings) {
-                TABS.motors.sensorGyroRate = result.motors_tab_gyro_settings.rate;
-                TABS.motors.sensorGyroScale = result.motors_tab_gyro_settings.scale;
-            }
-
-            if (result.motors_tab_accel_settings) {
-                TABS.motors.sensorAccelRate = result.motors_tab_accel_settings.rate;
-                TABS.motors.sensorAccelScale = result.motors_tab_accel_settings.scale;
-            }
-            $('.tab-motors .sensor select:first').change();
-        });
-
-
         function loadScaleSelector(selectorValues, selectedValue) {
             $('.tab-motors select[name="scale"]').find('option').remove();
 
@@ -296,7 +320,7 @@ TABS.motors.initialize = function (callback) {
 
         $('.tab-motors .sensor select').change(function(){
             TABS.motors.sensor = $('.tab-motors select[name="sensor_choice"]').val()
-            chrome.storage.local.set({'motors_tab_sensor_settings': {'sensor': TABS.motors.sensor}});
+            ConfigStorage.set({'motors_tab_sensor_settings': {'sensor': TABS.motors.sensor}});
 
             switch(TABS.motors.sensor){
             case "gyro":
@@ -314,7 +338,6 @@ TABS.motors.initialize = function (callback) {
             $('.tab-motors .rate select:first').change();
         });
 
-
         $('.tab-motors .rate select, .tab-motors .scale select').change(function () {
             var rate = parseInt($('.tab-motors select[name="rate"]').val(), 10);
             var scale = parseFloat($('.tab-motors select[name="scale"]').val());
@@ -323,7 +346,7 @@ TABS.motors.initialize = function (callback) {
 
             switch(TABS.motors.sensor) {
             case "gyro":
-                chrome.storage.local.set({'motors_tab_gyro_settings': {'rate': rate, 'scale': scale}});
+                ConfigStorage.set({'motors_tab_gyro_settings': {'rate': rate, 'scale': scale}});
                 TABS.motors.sensorGyroRate = rate;
                 TABS.motors.sensorGyroScale = scale;
 
@@ -334,7 +357,7 @@ TABS.motors.initialize = function (callback) {
                 }, rate, true);
                 break;
             case "accel":
-                chrome.storage.local.set({'motors_tab_accel_settings': {'rate': rate, 'scale': scale}});
+                ConfigStorage.set({'motors_tab_accel_settings': {'rate': rate, 'scale': scale}});
                 TABS.motors.sensorAccelRate = rate;
                 TABS.motors.sensorAccelScale = scale;
                 accel_helpers = initGraphHelpers('#graph', samples_accel_i, [-scale, scale]);
@@ -348,16 +371,16 @@ TABS.motors.initialize = function (callback) {
             function update_accel_graph() {
                 if (!accel_offset_established) {
                     for (var i = 0; i < 3; i++) {
-                        accel_offset[i] = SENSOR_DATA.accelerometer[i] * -1;
+                        accel_offset[i] = FC.SENSOR_DATA.accelerometer[i] * -1;
                     }
 
                     accel_offset_established = true;
                 }
 
                 var accel_with_offset = [
-                    accel_offset[0] + SENSOR_DATA.accelerometer[0],
-                    accel_offset[1] + SENSOR_DATA.accelerometer[1],
-                    accel_offset[2] + SENSOR_DATA.accelerometer[2]
+                    accel_offset[0] + FC.SENSOR_DATA.accelerometer[0],
+                    accel_offset[1] + FC.SENSOR_DATA.accelerometer[1],
+                    accel_offset[2] + FC.SENSOR_DATA.accelerometer[2]
                     ];
 
                 updateGraphHelperSize(accel_helpers);
@@ -372,9 +395,9 @@ TABS.motors.initialize = function (callback) {
 
             function update_gyro_graph() {
                 var gyro = [
-                    SENSOR_DATA.gyroscope[0],
-                    SENSOR_DATA.gyroscope[1],
-                    SENSOR_DATA.gyroscope[2]
+                    FC.SENSOR_DATA.gyroscope[0],
+                    FC.SENSOR_DATA.gyroscope[1],
+                    FC.SENSOR_DATA.gyroscope[2]
                     ];
 
                 updateGraphHelperSize(gyro_helpers);
@@ -402,11 +425,32 @@ TABS.motors.initialize = function (callback) {
             }
         });
 
+
+        // set refresh speeds according to configuration saved in storage
+        ConfigStorage.get(['motors_tab_sensor_settings', 'motors_tab_gyro_settings', 'motors_tab_accel_settings'], function (result) {
+            if (result.motors_tab_sensor_settings) {
+                var sensor = result.motors_tab_sensor_settings.sensor;
+                $('.tab-motors select[name="sensor_choice"]').val(result.motors_tab_sensor_settings.sensor);
+            }
+
+            if (result.motors_tab_gyro_settings) {
+                TABS.motors.sensorGyroRate = result.motors_tab_gyro_settings.rate;
+                TABS.motors.sensorGyroScale = result.motors_tab_gyro_settings.scale;
+            }
+
+            if (result.motors_tab_accel_settings) {
+                TABS.motors.sensorAccelRate = result.motors_tab_accel_settings.rate;
+                TABS.motors.sensorAccelScale = result.motors_tab_accel_settings.scale;
+            }
+            $('.tab-motors .sensor select:first').change();
+        });
+
+
         // Amperage
         function power_data_pull() {
-            motor_voltage_e.text(i18n.getMessage('motorsVoltageValue', [ANALOG.voltage]));
-            motor_mah_drawing_e.text(i18n.getMessage('motorsADrawingValue', [ANALOG.amperage.toFixed(2)]));
-            motor_mah_drawn_e.text(i18n.getMessage('motorsmAhDrawnValue', [ANALOG.mAhdrawn]));
+            motor_voltage_e.text(i18n.getMessage('motorsVoltageValue', [FC.ANALOG.voltage]));
+            motor_mah_drawing_e.text(i18n.getMessage('motorsADrawingValue', [FC.ANALOG.amperage.toFixed(2)]));
+            motor_mah_drawn_e.text(i18n.getMessage('motorsmAhDrawnValue', [FC.ANALOG.mAhdrawn]));
             
         }
         GUI.interval_add('motors_power_data_pull_slow', power_data_pull, 250, true); // 4 fps
@@ -417,7 +461,7 @@ TABS.motors.initialize = function (callback) {
             accel_offset_established = false;
         });
 
-        var number_of_valid_outputs = (MOTOR_DATA.indexOf(0) > -1) ? MOTOR_DATA.indexOf(0) : 8;
+        var number_of_valid_outputs = (FC.MOTOR_DATA.indexOf(0) > -1) ? FC.MOTOR_DATA.indexOf(0) : 8;
         var rangeMin;
         var rangeMax;
         var neutral3d;
@@ -426,15 +470,15 @@ TABS.motors.initialize = function (callback) {
             rangeMax = self.DSHOT_MAX_VALUE;
             neutral3d = self.DSHOT_3D_NEUTRAL;
         } else {
-            rangeMin = MOTOR_CONFIG.mincommand;
-            rangeMax = MOTOR_CONFIG.maxthrottle;
+            rangeMin = FC.MOTOR_CONFIG.mincommand;
+            rangeMax = FC.MOTOR_CONFIG.maxthrottle;
             //Arbitrary sanity checks
             //Note: values may need to be revisited
-            neutral3d = (MOTOR_3D_CONFIG.neutral > 1575 || MOTOR_3D_CONFIG.neutral < 1425) ? 1500 : MOTOR_3D_CONFIG.neutral;
+            neutral3d = (FC.MOTOR_3D_CONFIG.neutral > 1575 || FC.MOTOR_3D_CONFIG.neutral < 1425) ? 1500 : FC.MOTOR_3D_CONFIG.neutral;
         }
 
         var motors_wrapper = $('.motors .bar-wrapper'),
-        servos_wrapper = $('.servos .bar-wrapper');
+            servos_wrapper = $('.servos .bar-wrapper');
 
         for (var i = 0; i < 8; i++) {
             motors_wrapper.append('\
@@ -546,11 +590,11 @@ TABS.motors.initialize = function (callback) {
 
         for (var i = 0; i < number_of_valid_outputs; i++) {
             if (!self.feature3DEnabled) {
-                if (MOTOR_DATA[i] > rangeMin) {
+                if (FC.MOTOR_DATA[i] > rangeMin) {
                     motors_running = true;
                 }
             } else {
-                if ((MOTOR_DATA[i] < MOTOR_3D_CONFIG.deadband3d_low) || (MOTOR_DATA[i] > MOTOR_3D_CONFIG.deadband3d_high)) {
+                if ((FC.MOTOR_DATA[i] < FC.MOTOR_3D_CONFIG.deadband3d_low) || (FC.MOTOR_DATA[i] > FC.MOTOR_3D_CONFIG.deadband3d_high)) {
                     motors_running = true;
                 }
             }
@@ -563,12 +607,12 @@ TABS.motors.initialize = function (callback) {
 
             var sliders = $('div.sliders input:not(.master)');
 
-            var master_value = MOTOR_DATA[0];
-            for (var i = 0; i < MOTOR_DATA.length; i++) {
-                if (MOTOR_DATA[i] > 0) {
-                    sliders.eq(i).val(MOTOR_DATA[i]);
+            var master_value = FC.MOTOR_DATA[0];
+            for (var i = 0; i < FC.MOTOR_DATA.length; i++) {
+                if (FC.MOTOR_DATA[i] > 0) {
+                    sliders.eq(i).val(FC.MOTOR_DATA[i]);
 
-                    if (master_value != MOTOR_DATA[i]) {
+                    if (master_value != FC.MOTOR_DATA[i]) {
                         master_value = false;
                     }
                 }
@@ -592,7 +636,15 @@ TABS.motors.initialize = function (callback) {
         }
 
         function get_motor_data() {
-            MSP.send_message(MSPCodes.MSP_MOTOR, false, false, get_servo_data);
+            MSP.send_message(MSPCodes.MSP_MOTOR, false, false, get_motor_telemetry_data);
+        }
+
+        function get_motor_telemetry_data() {
+            if (FC.MOTOR_CONFIG.use_dshot_telemetry || FC.MOTOR_CONFIG.use_esc_sensor) {
+                MSP.send_message(MSPCodes.MSP_MOTOR_TELEMETRY, false, false, get_servo_data);
+            } else {
+                get_servo_data();
+            }
         }
 
         function get_servo_data() {
@@ -605,8 +657,8 @@ TABS.motors.initialize = function (callback) {
             var previousArmState = self.armed;
             var block_height = $('div.m-block:first').height();
 
-            for (var i = 0; i < MOTOR_DATA.length; i++) {
-                var motorValue = MOTOR_DATA[i];
+            for (var i = 0; i < FC.MOTOR_DATA.length; i++) {
+                var motorValue = FC.MOTOR_DATA[i];
                 var barHeight = motorValue - rangeMin,
                 margin_top = block_height - (barHeight * (block_height / full_block_scale)).clamp(0, block_height),
                 height = (barHeight * (block_height / full_block_scale)).clamp(0, block_height),
@@ -618,16 +670,58 @@ TABS.motors.initialize = function (callback) {
                     'height' : height + 'px',
                     'background-color' : 'rgba(255,187,0,1.'+ color +')'
                 });
+
+                if (i < FC.MOTOR_CONFIG.motor_count && (FC.MOTOR_CONFIG.use_dshot_telemetry || FC.MOTOR_CONFIG.use_esc_sensor)) {
+
+                    const MAX_INVALID_PERCENT = 100,
+                          MAX_VALUE_SIZE = 6;
+
+                    let rpmMotorValue = FC.MOTOR_TELEMETRY_DATA.rpm[i];
+
+                    // Reduce the size of the value if too big
+                    if (rpmMotorValue > 999999) {
+                        rpmMotorValue = (rpmMotorValue / 1000000).toFixed(5 - (rpmMotorValue / 1000000).toFixed(0).toString().length) + "M";  
+                    }
+
+                    rpmMotorValue = rpmMotorValue.toString().padStart(MAX_VALUE_SIZE);
+                    let telemetryText = i18n.getMessage('motorsRPM', {motorsRpmValue: rpmMotorValue});
+
+                    
+                    if (FC.MOTOR_CONFIG.use_dshot_telemetry) {
+
+                        let invalidPercent = FC.MOTOR_TELEMETRY_DATA.invalidPercent[i];
+
+                        let classError = (invalidPercent > MAX_INVALID_PERCENT) ? "warning" : "";
+                        invalidPercent = (invalidPercent / 100).toFixed(2).toString().padStart(MAX_VALUE_SIZE);
+
+                        telemetryText += "<br><span class='" + classError + "'>";
+                        telemetryText += i18n.getMessage('motorsRPMError', {motorsErrorValue: invalidPercent});
+                        telemetryText += "</span>";
+                    }
+
+                    if (FC.MOTOR_CONFIG.use_esc_sensor) {
+
+                        let escTemperature = FC.MOTOR_TELEMETRY_DATA.temperature[i];
+
+                        telemetryText += "<br>";
+                        escTemperature = escTemperature.toString().padStart(MAX_VALUE_SIZE);
+                        telemetryText += i18n.getMessage('motorsESCTemperature', {motorsESCTempValue: escTemperature});
+                    }
+
+                    $('.motor_testing .telemetry .motor-' + i).html(telemetryText);
+                }
+                
+
             }
 
             // servo indicators are still using old (not flexible block scale), it will be changed in the future accordingly
-            for (var i = 0; i < SERVO_DATA.length; i++) {
-                var data = SERVO_DATA[i] - 1000,
+            for (var i = 0; i < FC.SERVO_DATA.length; i++) {
+                var data = FC.SERVO_DATA[i] - 1000,
                 margin_top = block_height - (data * (block_height / 1000)).clamp(0, block_height),
                 height = (data * (block_height / 1000)).clamp(0, block_height),
                 color = parseInt(data * 0.009);
 
-                $('.servo-' + i + ' .label', servos_wrapper).text(SERVO_DATA[i]);
+                $('.servo-' + i + ' .label', servos_wrapper).text(FC.SERVO_DATA[i]);
                 $('.servo-' + i + ' .indicator', servos_wrapper).css({'margin-top' : margin_top + 'px', 'height' : height + 'px', 'background-color' : 'rgba(255,187,0,1'+ color +')'});
             }
             //keep the following here so at least we get a visual cue of our motor setup
@@ -643,7 +737,50 @@ TABS.motors.initialize = function (callback) {
         // enable Status and Motor data pulling
         GUI.interval_add('motor_and_status_pull', get_status, 50, true);
 
-        GUI.content_ready(callback);
+        let zeroThrottleValue = rangeMin;
+
+        if (self.feature3DEnabled) {
+            zeroThrottleValue = neutral3d;
+        }
+
+        setup_motor_output_reordering_dialog(content_ready, zeroThrottleValue);
+
+        function content_ready() {
+            GUI.content_ready(callback);
+        }
+
+       GUI.content_ready(callback);
+    }
+
+    function setup_motor_output_reordering_dialog(callbackFunction, zeroThrottleValue)
+    {
+        const domDialogMotorOutputReorder = $('#dialogMotorOutputReorder');
+
+        const motorOutputReorderComponent = new MotorOutputReorderComponent($('#dialogMotorOutputReorderContent'),
+            callbackFunction, mixerList[FC.MIXER_CONFIG.mixer - 1].name,
+            zeroThrottleValue, zeroThrottleValue + 200);
+
+        $('#dialogMotorOutputReorder-closebtn').click(closeDialog);
+
+        function closeDialog()
+        {
+            domDialogMotorOutputReorder[0].close();
+            motorOutputReorderComponent.close();
+            $(document).off("keydown", onDocumentKeyPress);
+        }
+
+        function onDocumentKeyPress(event)
+        {
+            if (27 === event.which) {
+                closeDialog();
+            }
+        }
+
+        $('#motorOutputReorderDialogOpen').click(function()
+        {
+            $(document).on("keydown", onDocumentKeyPress);
+            domDialogMotorOutputReorder[0].showModal();
+        });
     }
 };
 

@@ -7,7 +7,7 @@
   position: absolute;
   width: 100%;
   height: 26px;
-  top: 0px;
+  top: 0;
   left: 0;
   text-align: center;
   line-height: 24px;
@@ -19,6 +19,7 @@
 
 .tab-osd .spacer_box_title {
   float: none;
+  font-weight: normal;
 }
 
 .tab-osd .spacer_box_title .profileOsdHeader {
@@ -46,7 +47,7 @@
   width: 100%;
   height: 26px;
   border-radius: 5px;
-  border: 1px solid silver;
+  border: 1px solid var(--subtleAccent);
 }
 
 .info .progress {
@@ -56,7 +57,7 @@
 .info .progress::-webkit-progress-bar {
   background-color: #4f4f4f;
   border-radius: 4px;
-  box-shadow: inset 0px 0px 5px #2f2f2f;
+  box-shadow: inset 0 0 5px #2f2f2f;
 }
 
 .info .progress::-webkit-progress-value {
@@ -85,9 +86,8 @@
 }
 
 .tab-osd ul li {
-  list-style: initial;
-  list-style-type: circle;
-  margin-left: 30px;
+    list-style: circle;
+    margin-left: 30px;
 }
 
 .tab-osd .options {
@@ -114,7 +114,7 @@
 .tab-osd .options select {
   width: 300px;
   height: 20px;
-  border: 1px solid silver;
+  border: 1px solid var(--subtleAccent);
 }
 
 .tab-osd .options .releases select {
@@ -128,7 +128,7 @@
 
 .tab-osd .options .description {
   position: relative;
-  left: 0px;
+  left: 0;
   font-style: italic;
   color: #818181;
 }
@@ -155,7 +155,7 @@
   text-align: center;
   font-weight: bold;
   color: white;
-  border-bottom: 1px solid silver;
+  border-bottom: 1px solid var(--subtleAccent);
   background-color: #3f4241;
 }
 
@@ -182,7 +182,7 @@
 .tab-osd .git_info {
   display: none;
   margin-bottom: 10px;
-  border: 1px solid silver;
+  border: 1px solid var(--subtleAccent);
 }
 
 .tab-osd .git_info .title {
@@ -190,7 +190,7 @@
   text-align: center;
   font-weight: bold;
   color: white;
-  border-bottom: 1px solid silver;
+  border-bottom: 1px solid var(--subtleAccent);
   background-color: #3f4241;
 }
 
@@ -204,52 +204,6 @@
 
 .tab-osd .git_info p a:hover {
   text-decoration: underline;
-}
-
-.tab-osd .buttons {
-  width: calc(100% - 20px);
-  margin-top: 10px;
-  bottom: 10px;
-}
-
-.tab-osd .buttons a {
-  display: block;
-  float: left;
-  margin: 0 10px 0 0;
-  padding: 0 15px 0 15px;
-  height: 28px;
-  line-height: 28px;
-  text-align: center;
-  font-weight: bold;
-  border: 1px solid silver;
-  background-color: #ececec;
-}
-
-.tab-osd .buttons a:hover {
-  background-color: #dedcdc;
-}
-
-.tab-osd .buttons a.flash_font.locked {
-  background-color: #b8b8b8;
-}
-
-.tab-osd .buttons a.flash_font.locked:hover {
-  cursor: default;
-  background-color: #b8b8b8;
-}
-
-.tab-osd .buttons a.load_remote_file.locked {
-  background-color: #b8b8b8;
-}
-
-.tab-osd .buttons a.load_remote_file.locked:hover {
-  cursor: default;
-  background-color: #b8b8b8;
-}
-
-.tab-osd .buttons .back {
-  float: right;
-  margin: 0;
 }
 
 .tab-osd .btn .disabled {
@@ -273,7 +227,7 @@
 
 .tab-osd .display-layout input.position{
   width: 5em;
-  border-bottom: 1px solid #ccc
+  border-bottom: 1px solid var(--subtleAccent);
 }
 
 .tab-osd .hide {
@@ -307,15 +261,15 @@
     text-overflow: ellipsis;
     display: inline-block;
     white-space: nowrap;
-    vertical-align: bottom;
+    vertical-align: text-bottom;
 }
 
 .tab-osd .preview .gui_box_titlebar select {
     max-width: 100px;
-    border-radius: 2px;
+    border-radius: 3px;
     font-size: 11px;
     font-weight: normal;
-    font-family: 'open_sansregular', 'Segoe UI', Tahoma, sans-serif;
+    font-family: 'Open Sans', 'Segoe UI', Tahoma, sans-serif;
 }
 
 .tab-osd .preview .gui_box_bottombar {
@@ -355,8 +309,7 @@
 #font-logo-preview-container {
   background:rgba(0, 255, 0, 0.4);
   margin-bottom: 10px;
-  width: 45%;
-  float: left;
+  box-sizing: border-box;
 }
 
 #font-logo-preview {
@@ -366,11 +319,8 @@
 }
 
 #font-logo-info {
-  width: 45%;
-  margin-left: 18px;
   font-size: 125%;
   line-height: 150%;
-  float: left;
 }
 
 #font-logo-info h3 {
@@ -416,7 +366,7 @@
 
 button {
   padding: 4px 10px !important;
-  font-family: 'open_sanssemibold', Arial;
+  font-weight: 600;
   font-size: 9pt !important;
   cursor: pointer;
 }
@@ -429,31 +379,37 @@ button {
 }
 
 .fontpresets {
-  border: 1px solid #cccccc;
+  background: var(--boxBackground);
+  color: var(--defaultText);
+  border: 1px solid var(--subtleAccent);
+  border-radius: 3px;
 }
 
 .tab-osd .switchable-field {
   padding: 3px;
   border: 1px solid transparent;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--subtleAccent);
 }
 
 .tab-osd .switchable-field.mouseover {
-  background: #fff;
-  border: 1px solid #ccc;
+  background: var(--boxBackground);
+  border: 1px solid var(--subtleAccent);
   font-weight: 800;
 }
 
 .tab-osd .switchable-field input {
   border-radius: 3px;
-  border: 1px solid #ddd;
-  padding:2px;
-  margin-top: -2px;
+  border: 1px solid var(--subtleAccent);
+  padding: 2px;
 }
 
 .tab-osd .switchable-field input[type=number] {
   float: right;
   display: none;
+  line-height: 23px;
+  height: 23px;
+  box-sizing: border-box;
+  padding-right: 0;
 }
 
 .tab-osd .switchable-field label {
@@ -470,7 +426,6 @@ button {
 .spacer_box_title span {
   font-size: 11px;
   font-weight: normal;
-  font-family: 'open_sansregular', 'Segoe UI', Tahoma, sans-serif;
 }
 
 .spacer_box div input {
@@ -483,18 +438,28 @@ button {
 
 
 .tab-osd .switchable-field:last-child {
-  border-bottom: 0px;
+  border-bottom: 0;
+}
+
+.tab-osd input,
+.tab-osd select {
+  background: var(--boxBackground);
+  color: var(--defaultText);
+  border: 1px solid var(--subtleAccent);
+  border-radius: 3px;
 }
 
 .tab-osd .preview {
   width: 360px;
   float: left; 
   position: sticky;
-  top: 0px;
+  top: 0;
+  margin-left: calc((100% - 362px) / 2);
 
-  /* please don't copy the generic background image from another project
-   * and replace the one that @nathantsoi took :)
-   */
+
+/* please don't copy the generic background image from another project
+ * and replace the one that @nathantsoi took :)
+ */
   background: url(../../images/osd-bg-1.jpg);
   background-size: cover;
   border-bottom-left-radius: 3px;
@@ -504,14 +469,14 @@ button {
 .tab-osd .alarms label {
   display: block;
   width:100%;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--subtleAccent);
   margin-top:5px;
   padding-bottom: 5px
 }
 
 .tab-osd .alarms label:last-child {
   border-bottom: none;
-  padding-bottom: 0px
+  padding-bottom: 0
 }
 
 .tab-osd .alarms input {
@@ -520,7 +485,6 @@ button {
   height: 18px;
   line-height: 20px;
   text-align: left;
-  border: 1px solid silver;
   border-radius: 3px;
   margin-right: 11px;
   font-size: 11px;
@@ -542,4 +506,57 @@ button {
   .tab-osd .content_wrapper {
     height: calc(100% - 30px);
   }
+}
+
+.tab-osd .grid-col.col4:first-child, .tab-osd  .grid-col.col4:last-child {
+    width: calc((100% - 390px) / 2);
+}
+
+.tab-osd .grid-row {
+    margin-bottom: 40px;
+}
+
+.tab-osd .grid-col.col4 {
+    width: auto;
+}
+
+@media all and (max-width: 575px) {
+    .tab-osd .osd-preview {
+        order: 1;
+    }
+    .tab-osd .osd-feature {
+        order: 2;
+    }
+    .tab-osd .osd-profile {
+        order: 3;
+    }
+    .tab-osd .preview.requires-osd-feature {
+        width: 100%;
+        max-width: 363px;
+        margin-left: 0;
+    }
+    .tab-osd .osd-feature, .tab-osd .osd-profile {
+        max-width: 100%;
+    }
+    #fontmanagercontent {
+        max-width: 100%;
+    }
+    .content_wrapper.font-preview {
+        padding: 15px 0;
+    }
+    #fontmanagercontent .grid-row {
+        margin-bottom: 15px;
+    }
+    .fontpresets_wrapper {
+        display: block;
+        position: relative;
+        right: 0;
+        top: 0;
+        margin-bottom: 15px;
+    }
+}
+@media all and (max-width: 575px) and (min-width: 390px) {
+    .tab-osd .preview.requires-osd-feature {
+        margin-left: calc((100% - 363px) / 2);
+    }
 }

@@ -1,12 +1,12 @@
 .tab-servos .title {
-    margin-top: 0px;
+    margin-top: 0;
     line-height: 30px;
     text-align: center;
     font-weight: bold;
-    border: 1px solid #e4e4e4;
+    border: 1px solid var(--subtleAccent);
     border-bottom: 0;
-    background-color: #DADADA;
-    color: #797979;
+    background-color: var(--quietHeader);
+    color: var(--quietText);
     border-top-right-radius: 5px;
     border-top-left-radius: 5px;
 }
@@ -18,9 +18,9 @@
 }
 
 .tab-servos table, .tab-servos table th, .tab-servos table td {
-    border-left: 0px;
-    border-right: 0px;
-    border-top: 0px;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
 }
 
 .tab-servos input[type="number"]::-webkit-inner-spin-button {
@@ -36,26 +36,19 @@
     padding-top: 3px;
     padding-bottom: 3px;
     text-align: center;
-    border: 1px solid #e4e4e4;
+    border: 1px solid var(--subtleAccent);
+    line-height: 14px;
 }
 
 .tab-servos table td {
-    border-bottom: 1px solid #e4e4e4;
+    border-bottom: 1px solid var(--subtleAccent);
     padding: 6px 5px 7px 5px;
-    border-left: 1px solid #e4e4e4;
-    border-right: 1px solid #e4e4e4;
+    border-left: 1px solid var(--subtleAccent);
+    border-right: 1px solid var(--subtleAccent);
 }
 
 .tab-servos table tr:nth-child(even) {
     background-color: #f9f9f9;
-}
-
-.tab-servos table tr:first-child {
-    border-left: 1px solid #e4e4e4;
-    border-right: 1px solid #e4e4e4;
-    background-color: #828885;
-    color: #FFF;
-    line-height: 14px;
 }
 
 .tab-servos table td:nth-child(2) {
@@ -86,12 +79,13 @@
 }
 
 .tab-servos table input {
-    border: 1px solid silver;
+    border: 1px solid var(--subtleAccent);
     border-radius: 3px;
 }
 
 .tab-servos table select {
-    border: 1px solid silver;
+    border: 1px solid var(--subtleAccent);
+    border-radius: 3px;
 }
 
 .tab-servos table .channel input {
@@ -130,13 +124,13 @@
 
 .tab-servos .direction .rate {
     width: 110px;
-    height: 20px;
+    height: 22px;
     text-align: center;
 }
 
 .tab-servos .live {
     float: left;
-    margin-top: 0px;
+    margin-top: 0;
 }
 
 .tab-servos .live span {
@@ -181,3 +175,16 @@
 .tab-servos .short {
     width: 40px;
 } 
+
+.tab-servos .table_overflow {
+    overflow: auto;
+}
+
+@media all and (max-width: 575px) {
+    .tab-servos table th {
+        min-width: 30px;
+    }
+    .tab-servos .min, .tab-servos .max, .tab-servos .middle {
+        min-width: 60px;
+    }
+}

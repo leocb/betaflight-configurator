@@ -2,25 +2,20 @@
     <div class="content_wrapper">
         <div class="tab_title" i18n="tabAuxiliary">tabAuxiliary</div>
         <div class="cf_doc_version_bt">
-            <a id="button-documentation" href="https://github.com/betaflight/betaflight/releases" target="_blank"></a>
+            <a id="button-documentation" href="https://github.com/betaflight/betaflight/releases" target="_blank" rel="noopener noreferrer"></a>
         </div>
-        <div class="note spacebottom">
-            <div class="note_spacer">
-                <p i18n="auxiliaryHelp"></p>
-            </div>
+        <div class="note">
+            <p i18n="auxiliaryHelp"></p>
         </div>
 
         <div class="toolbox">
             <form>
-                <input type="checkbox" id="switch-toggle-unused" name="switch-toggle-unused" class="toggle"></input>
-                <label for="switch-toggle-unused"><span i18n="auxiliaryToggleUnused" /></label>
+                <input type="checkbox" id="switch-toggle-unused" name="switch-toggle-unused" class="toggle" />
+                <span i18n="auxiliaryToggleUnused"></span>
             </form>
         </div>
 
-        <table class="modes">
-            <tbody>
-            </tbody>
-        </table>
+        <div class="modes"></div>
     </div>
     <div class="content_toolbar">
         <div class="btn save_btn">
@@ -29,20 +24,24 @@
     </div>
 </div>
 <div id="tab-auxiliary-templates">
-    <table class="modes">
-        <tbody>
-            <tr class="mode">
-                <td class="info">
-                    <p class="name"></p>
-                    <div class="buttons">
-                        <a class="addLink" href="#" i18n="auxiliaryAddLink"></a>
-                        <a class="addRange" href="#" i18n="auxiliaryAddRange"></a>
-                    </div>
-                </td>
-                <td class="ranges"></td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="modes">
+        <div class="mode">
+            <div class="info">
+                <p class="name"></p>
+                <div class="buttons">
+                    <a class="addLink sm-min" href="#" i18n="auxiliaryAddLink"></a>
+                    <a class="addRange sm-min" href="#" i18n="auxiliaryAddRange"></a>
+                    <a class="addLink xs" href="#">
+                        <em class="fas fa-link"></em>
+                    </a>
+                    <a class="addRange xs" href="#">
+                        <em class="fas fa-plus"></em>
+                    </a>
+                </div>
+            </div>
+            <div class="ranges"></div>
+        </div>
+    </div>
     <div class="range">
         <div class="channelInfo">
             <div class="channelName">

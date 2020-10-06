@@ -109,8 +109,13 @@ var MSPCodes = {
     MSP_BATTERY_STATE:              130,
     MSP_MOTOR_CONFIG:               131,
     MSP_GPS_CONFIG:                 132,
-    MSP_COMPASS_CONFIG:             133,
+// Removed:   MSP_COMPASS_CONFIG:             133,
     MSP_GPS_RESCUE:                 135,
+
+    MSP_VTXTABLE_BAND:              137,
+    MSP_VTXTABLE_POWERLEVEL:        138,
+
+    MSP_MOTOR_TELEMETRY:            139,
 
     MSP_STATUS_EX:                  150,
 
@@ -145,8 +150,13 @@ var MSPCodes = {
     MSP_SET_LED_STRIP_MODECOLOR:    221,
     MSP_SET_MOTOR_CONFIG:           222,
     MSP_SET_GPS_CONFIG:             223,
-    MSP_SET_COMPASS_CONFIG:         224,
+// Removed:    MSP_SET_COMPASS_CONFIG:         224,
     MSP_SET_GPS_RESCUE:             225,
+
+    MSP_SET_VTXTABLE_BAND:          227,
+    MSP_SET_VTXTABLE_POWERLEVEL:    228,
+
+    MSP_MULTIPLE_MSP:               230,
 
     MSP_MODE_RANGES_EXTRA:          238,
     MSP_SET_ACC_TRIM:               239,
@@ -161,5 +171,14 @@ var MSPCodes = {
 
     MSP_EEPROM_WRITE:               250,
     MSP_DEBUGMSG:                   253, // Not used
-    MSP_DEBUG:                      254
+    MSP_DEBUG:                      254,
+
+    // MSPv2 Common
+    MSP2_COMMON_SERIAL_CONFIG:      0x1009,
+    MSP2_COMMON_SET_SERIAL_CONFIG:  0x100A,
+
+    // MSPv2 Betaflight specific
+    MSP2_BETAFLIGHT_BIND:           0x3000,
+    MSP2_MOTOR_OUTPUT_REORDERING:   0x3001,
+    MSP2_SET_MOTOR_OUTPUT_REORDERING:    0x3002,
 };
